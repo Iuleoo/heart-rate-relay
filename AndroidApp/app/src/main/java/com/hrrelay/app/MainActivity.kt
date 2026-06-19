@@ -477,7 +477,7 @@ class MainActivity : ComponentActivity() {
                         status = pcStatusText,
                         isConnected = pcConnected,
                         extraContent = {
-                            if (!pcConnected) {
+                            if (!pcConnected && pcStatusText != "正在连接服务器...") {
                                 Spacer(modifier = Modifier.height(8.dp))
                                 Column(modifier = Modifier.fillMaxWidth()) {
                                     OutlinedTextField(
@@ -537,6 +537,24 @@ class MainActivity : ComponentActivity() {
                                             Text("连接")
                                         }
                                     }
+                                }
+                            } else {
+                                // 已连接或正在连接时，提供主动断开的红色按钮
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Button(
+                                    onClick = {
+                                        pcConnector.disconnect()
+                                        isPcConnected.value = false
+                                        pcStatus.value = "已主动断开"
+                                        notifyServiceStateChanged()
+                                        updateKeepAliveServiceStatus()
+                                    },
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = MaterialTheme.colorScheme.error
+                                    ),
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Text("断开连接")
                                 }
                             }
                         }

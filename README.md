@@ -1,12 +1,12 @@
-# ❤️ 心率监测中转站
+# ❤️ 心率监测中转站 (Heart Rate Relay)
 
-一个基于 **Google Material 3 (Material You)** 设计语言的跨端实时心率监测系统。该项目支持通过安卓手机 App 采集蓝牙手表/手环（如华为、荣耀等）的心率与 R-R 间期数据，通过局域网/互联网双向通信中转到电脑端，并在 **Web 网页控制台**、**OBS 直播悬浮窗** 以及 **Windows 游戏置顶胶囊悬浮窗** 中进行多场景实时展示、智能 HRV 疲劳度评估与历史统计。
+一个基于 **Google Material 3 (Material You)** 设计语言的跨端实时心率监测系统。该项目支持通过安卓手机 App 采集蓝牙手表/手环（如华为、荣耀等）的心率与 R-R 间期数据，通过局域网/互联网双向通信中转到电脑端，并在 **Web 网页控制台**、**OBS 直播悬浮窗** 以及 **Windows 游戏置顶胶囊悬浮窗** 中进行多场景实时展示、智能 HRV 身体疲劳度评估与历史统计。
 
 ---
 
 ## 🎯 系统架构与流程
 ```
-  [ ⌚ 华为/荣耀等手表 ]
+  [ ⌚ 蓝牙手表/手环 ]
           │
       (BLE 蓝牙广播 0x180D)
           ▼
@@ -23,103 +23,84 @@
 
 ---
 
-## ✨ v1.0.0 核心特性
+## ✨ 核心特性
 
-*   **📈 实时 HRV 与疲劳度评估**：支持从蓝牙手表提取 R-R 间期数据，通过 RMSSD 算法滚动计算身体疲劳度与压力指数，并实时展示。
-*   **🔒 安全认证机制**：引入 API Token 握手校验，防止局域网/公网接口数据泄露；管理员登录密码采用 PBKDF2 盐值哈希加密，杜绝明文泄露。
-*   **🛡️ IP 暴力破解锁定**：网页登录接口内置防爆破机制，同一 IP 登录失败自动锁定，保障外网部署安全。
-*   **☁️ 云端部署自适应 (Cloud Mode)**：支持一键切换为云主机模式。开启后服务仅绑定 `127.0.0.1`（推荐配合 Nginx/Caddy 进行反向代理与 HTTPS SSL），并停用 UDP 广播；网页端智能识别访问来源，自动精简或隐藏局域网组播步骤，提供纯粹的外网 WSS 指引。
+*   **📈 实时 HRV 与身体疲劳度评估**：支持从蓝牙手表提取 R-R 间期数据，通过 RMSSD 时域算法滚动计算身体疲劳度与交感神经压力指数，并在 Web 端动态反馈。
+*   **🔒 全方位安全防护体系**：引入 API Token 握手校验，防止局域网/公网接口数据泄露；管理员登录密码采用 PBKDF2 盐值哈希加密，登录接口内置防撞库自动锁定机制。
+*   **☁️ 云端自适应部署 (Cloud Mode)**：支持一键切换为云主机模式。网页端控制台能智能识别您的网络访问环境，自动精简或隐藏局域网组播步骤，提供安全加密的反向代理与 WSS 连接指引。
 *   **📉 数据降采样与优化**：历史数据查询支持服务端自动等比例抽稀，保持前端 Chart.js 历史曲线渲染极其轻量和流畅。
 *   **🚨 极限心率预警推送**：内置 PushPlus (微信)、Telegram Bot、钉钉机器人、飞书机器人等四种主流预警通道，支持自定义安全阈值与推送冷却（Cooldown）机制。
 
 ---
 
 ## 📁 项目目录结构
-项目业务模块划分清晰：
 ```
 shouhuan/ (项目根目录)
-├── README.md               # 项目核心使用与开发说明文档
-├── upgrade_keywords.md     # 后续 AI 升级与改造的技术关键词总结
-│
 ├── AndroidApp/             # 📱 安卓手机端中转 App (Kotlin + Jetpack Compose)
-│   ├── app/src/main/       # 安卓核心源码目录
-│   │   └── java/com/hrrelay/app/
-│   │       ├── MainActivity.kt   # App 界面 (Material 3 卡片布局 + 浸入式系统栏)
-│   │       ├── BleManager.kt     # BLE 蓝牙设备搜索与心率广播解析 (0x180D)
-│   │       ├── PcConnector.kt    # UDP 局域网广播发现与 WebSocket 电脑端通信 (带 Token)
-│   │       └── KeepAliveService.kt# 动态前台通知保活服务，防系统后台休眠杀进程
-│   └── build.gradle.kts    # Gradle 构建配置 (统一使用本地缓存 BOM 依赖)
-│
 ├── WindowsApp/             # 🖥️ Windows 原生置顶悬浮窗 (C# WPF .NET 4.5)
-│   ├── HeartRateOverlay.exe# 编译好的 Release 运行程序（双击直接运行）
-│   ├── config.json         # 悬浮窗自动生成的本地配置文件 (IP/Token/主题等)
-│   ├── MainWindow.xaml     # M3 胶囊边框外观 (CornerRadius=26 完美药丸形)
-│   ├── MainWindow.xaml.cs  # 置顶/拖拽逻辑，Win32 API 鼠标穿透，M3 主题配色，WS 自动重连
-│   ├── SettingsWindow.xaml # 设置窗体 (Outlined 文本框，适配 DPI 缩放防止按钮截断)
-│   └── HeartRateOverlay.csproj # WPF 项目工程构建配置文件
-│
-└── Server/                 # 💻 服务端与 Web 控制台网页 (Python + aiohttp)
-    ├── main.py             # 核心入口文件，管理后台 UDP 广播与 aiohttp 应用生命周期
-    ├── config.py           # 安全密码 PBKDF2 哈希校验与本地 IP/配置管理
-    ├── database.py         # SQLite 数据库助手 (支持实时写入、按范围降采样读取、HRV 字段扩展)
-    ├── routes.py           # 路由分发器，处理 WebAPI 请求与 WebSocket 长连接中继
-    ├── hrv.py              # HRV (RMSSD/SDNN) 疲劳度与压力分析算法核心
-    ├── notifier.py         # 极限预警通知推送管理 (Telegram/微信/钉钉/飞书)
-    ├── ble_monitor.py      # 本地 BLE 蓝牙特征值嗅探与解析模块
-    ├── app.py              # 兼容性历史包装入口文件
-    ├── requirements.txt    # 服务端 Python 依赖列表
-    ├── heartrate.db        # 数据库 (本地 SQLite 存储，记录历史心率与 HRV)
-    ├── server_config.json  # 服务端自动生成的 API 安全令牌 (API Token)、哈希密码及配置
-    └── static/             # 🌐 Web 前端静态资源
-        ├── index.html      # 控制台页面 (搭载 Google Fonts Outfit, 模块化 M3 栅格，局域网自适应指引)
-        ├── style.css       # 响应式样式表 (M3 动态开关切换、自适应序号计数器)
-        ├── app.js          # 与服务端 WebSocket 长连接，防暴力登录，自适应 URL 构造，历史曲线绘制
-        └── login.html      # 磨砂玻璃态登录页面
+├── Server/                 # 💻 服务端与 Web 控制台网页 (Python + aiohttp)
+│   ├── static/             # 🌐 Web 前端静态资源 (index.html, app.js, style.css)
+│   ├── Dockerfile          # 后端 Docker 构建镜像文件
+│   └── main.py             # 服务端核心主入口
+├── docker-compose.yml      # Docker 容器化编排配置文件 (Server + Caddy 网关)
+├── Caddyfile               # Caddy 自动化 SSL 证书与反向代理配置文件
+└── README.md               # 项目使用说明文档
 ```
 
 ---
 
 ## 🎨 Material 3 重构规范 (Google 风格)
 本项目各端均已深度适配谷歌 **Material Design 3** 规范：
-*   **Web 端**：采用 `Outfit` 与 `Noto Sans SC` 优雅字体，配以大圆角卡片、流光背景粒子、发光开关控件与谷歌 Material Symbols 矢量图标。
+*   **Web 端**：采用 `Outfit` 与 `YaHei UI` 优雅字体，配以大圆角卡片、流光背景粒子、发光开关控件与谷歌 Material Symbols 矢量图标。
 *   **WPF 端**：按钮为全圆角胶囊药丸状（Pill），输入框获得焦点时边框变粗并高亮深粉，支持亮暗色模式在 `#E5121214` (深色) 与 `#E5F8F9FA` (浅色) 间无缝变换。
-*   **Android 端**：浸入式状态栏与导航栏根据亮暗配色自动适配，全面升级为 `ElevatedCard` 和 `OutlinedCard` 容器，加载等待采用 Compose 原生 M3 旋转指示器。
+*   **Android 端**：浸入式状态栏与导航栏根据亮暗配置自动适配，全面升级为 `ElevatedCard` 和 `OutlinedCard` 容器，加载等待采用 Compose 原生 M3 旋转指示器。
 
 ---
 
 ## 🚀 快速上手指南
 
 ### 第一步：启动 Server 服务端
+
+#### 方法 A：使用 Docker Compose 一键启动 (推荐，适合云服务器部署)
+1. **修改域名 (可选)**：若您有公网域名，请编辑根目录下的 `Caddyfile`，将首行替换为您的域名；若只通过 IP 访问，则无需修改。
+2. **一键运行**：在项目根目录下，直接执行：
+   ```bash
+   docker compose up -d --build
+   ```
+3. **获取自动生成的密钥/密码**：容器首次运行会自动在根目录创建 `data/` 目录，运行以下命令查看系统随机生成的密码 and Token：
+   ```bash
+   cat data/server_config.json
+   ```
+
+#### 方法 B：本地 Python 源码运行 (适合本机开发调试)
 1. 进入 `Server/` 目录：
    ```bash
    cd Server
    ```
-2. 安装环境依赖（推荐使用 Python 3.8+）：
+2. 安装环境依赖（推荐使用 Python 3.8 - 3.12）：
    ```bash
    pip install -r requirements.txt
    ```
 3. 运行服务端主程序：
    ```bash
-   python app.py
+   python main.py
    ```
-4. 首次启动时，控制台将**自动生成一个 8 位管理员随机密码**（已通过 PBKDF2 哈希安全写入 `server_config.json`）。同时，浏览器将自动打开 `http://localhost:8765` 跳转到登录页。
-5. 控制台输出的 **API Token**（32位哈希）将用于各客户端的数据通信鉴权。
+4. 首次启动时，控制台将**自动生成一个 8 位管理员随机密码**（安全保存至 `server_config.json`）。同时，浏览器将自动打开控制台页面。
+
+---
 
 ### 第二步：配置并连接手机 App
-1. **安装手机客户端**：在手机上安装 `AndroidApp/` 目录下编译好的 APK，或使用 Android Studio/Gradle 编译运行：
-   * 设置 `JAVA_HOME` 为您的本地 JDK 目录。
-   * 在 `AndroidApp/` 目录下运行 `.\gradlew.bat assembleDebug` 生成 APK。
-2. **网络环境适应性 (支持局域网与外网/云端部署)**：
-   * **局域网本地模式 (默认)**：确保手机与电脑连接在**同一个 Wi-Fi**。App 会自动通过 UDP 组播发现这台电脑并建立连接。若由于网络隔离/组播被拦截导致自动连接失败，可在 App 中手动输入控制台提示的局域网 IP 地址并填入安全 Token 进行连接。
-   * **云端/公网模式**：若服务器部署在公网云主机上，推荐在服务端配置文件中开启 `cloud_mode`（此时将停用 UDP 明文广播以保证安全，并限制服务仅监听 `127.0.0.1`，推荐搭配 Nginx/Caddy 配置反向代理与 HTTPS SSL）。
-3. **网页端智能指引**：网页控制台能够**智能识别当前的访问来源**：
-   * 局域网内访问时，提供完整的 Wi-Fi 连接和 UDP 自动发现指南。
-   * 公网或域名/云端环境访问时，**自动精简步骤并屏蔽自动发现步骤**，将指南文案切换为指导复制公网 `wss://` / `ws://` 完整地址，确保安全直观。
-4. **App 权限与绑定**：打开手机 App，允许蓝牙和位置/附近设备权限。点击 **“扫描手表”** 并选择您的华为/荣耀设备，心率曲线将实时双向同步传输至服务端。
+1. **安装手机客户端**：在手机上安装 `AndroidApp/` 目录下编译好的 APK，或使用 Android Studio 编译运行。
+2. **网络连接**：
+   * **局域网模式**：确保手机与电脑在**同一 Wi-Fi**。App 会通过 UDP 自动扫描并建立连接；若组播被拦截，可在 App 中手动输入电脑 IP 和安全 Token 进行连接。
+   * **云端/公网模式**：在手机 App 的服务器地址中手动输入公网 HTTPS 代理后的 `wss://` / `ws://` 连接地址，并输入您的安全 Token 即可。
+3. **App 权限与绑定**：打开手机 App，允许蓝牙和位置/附近设备权限。点击 **“扫描手表”** 并选择您的蓝牙设备，心率曲线将实时双向同步传输至服务端。
+
+---
 
 ### 第三步：场景扩展使用
 #### 场景 A：OBS 游戏直播推流
-1. 在网页端控制台的“系统设置与扩展”中，复制 **“OBS 直播推流悬浮窗”** 链接（带鉴权 Token 格式）。
+1. 在网页端控制台的“系统设置与扩展”中，复制 **“OBS 直播推流悬浮窗”** 链接。
 2. 在 OBS 中添加一个 **“浏览器”** 来源。
 3. 粘贴该链接，并将宽度设为 `200`，高度设为 `80`。
 4. 此时 OBS 画面中将出现无背景、透明跳动的极简心率图层。
@@ -129,4 +110,4 @@ shouhuan/ (项目根目录)
 2. 右键点击电脑右下角系统托盘的“红色心率图标” -> **“设置...”**。
 3. 输入您的服务器 WebSocket URL（如 `ws://127.0.0.1:8765/ws`）和 **API Token**。
 4. 点击保存，即可在屏幕最上层显示极简胶囊心率，悬浮窗将自动尝试连接。
-5. 在托盘菜单中勾选 **“锁定 (鼠标穿透)”**，即使在激烈的全屏/窗口化游戏中也不会发生误触！
+5. 在托盘菜单中勾选 **“锁定 (鼠标穿透)”**，即使在全屏游戏中也不会发生误触！

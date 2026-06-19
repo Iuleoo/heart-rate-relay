@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>心率监测器 - Heart Rate Monitor</title>
+    <meta name="description" content="实时蓝牙心率监测应用，支持华为手表心率广播功能">
+    <link rel="icon" type="image/png" href="/static/favicon.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;900&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <link rel="stylesheet" href="/static/style.css?v=3.1.2">
+</head>
+<body>
+    <div class="app">
+        <!-- ═══ 背景装饰 ═══ -->
+        <div class="bg-decoration">
+            <div class="bg-orb bg-orb-1"></div>
+            <div class="bg-orb bg-orb-2"></div>
+            <div class="bg-orb bg-orb-3"></div>
+        </div>
+
+        <!-- ═══ 顶部导航 ═══ -->
+        <header class="header">
+            <div class="header-content">
+                <div class="logo">
+                    <div class="logo-icon">
+                        <svg viewBox="0 0 24 24" width="28" height="28" fill="url(#logoGradient)">
+                            <defs>
+                                <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" style="stop-color:#ff2d55" />
+                                    <stop offset="100%" style="stop-color:#ff6b8a" />
+                                </linearGradient>
+                            </defs>
+                            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 
+                                     2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09
+                                     C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5
+                                     c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                        </svg>
+                    </div>
+                    <h1>心率监测器</h1>
+                </div>
+
+                <!-- 导航 Tab -->
+                <nav class="nav-tabs">
+                    <button class="tab-btn active" id="tabBtnLive" onclick="switchTab('live')">实时监控</button>
+                    <button class="tab-btn" id="tabBtnHistory" onclick="switchTab('history')">历史记录</button>
+                    <button class="tab-btn" id="tabBtnNotifications" onclick="switchTab('notifications')">预警推送</button>
+                    <button class="tab-btn" id="tabBtnSettings" onclick="switchTab('settings')">系统设置</button>
+                </nav>
+
+                <div class="header-actions">
+                    <button id="themeToggleBtn" class="theme-toggle-btn" onclick="toggleTheme()" title="切换主题">
+                        <svg class="sun-icon" viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                            <path d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zm0 8c-1.65 0-3-1.35-3-3s1.35-3 3-3 3 1.35 3 3-1.35 3-3 3zm0-13c-.55 0-1 .45-1 1v2c0 .55.45 1 1 1s1-.45 1-1V3c0-.55-.45-1-1-1zm0 14c-.55 0-1 .45-1 1v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1zM5.64 5.64c-.39-.39-1.02-.39-1.41 0s-.39 1.02 0 1.41l1.41 1.41c.39.39 1.02.39 1.41 0s.39-1.02 0-1.41L5.64 5.64zm11.31 11.31c-.39-.39-1.02-.39-1.41 0s-.39 1.02 0 1.41l1.41 1.41c.39.39 1.02.39 1.41 0s.39-1.02 0-1.41l-1.41-1.41zM3 11c-.55 0-1 .45-1 1s.45 1 1 1h2c.55 0 1-.45 1-1s-.45-1-1-1H3zm14 0c-.55 0-1 .45-1 1s.45 1 1 1h2c.55 0 1-.45 1-1s-.45-1-1-1h-2zm-12.02 6.36c-.39-.39-1.02-.39-1.41 0s-.39 1.02 0 1.41l1.41 1.41c.39.39 1.02.39 1.41 0s.39-1.02 0-1.41l-1.41-1.41zm11.31-11.31c-.39-.39-1.02-.39-1.41 0s-.39 1.02 0 1.41l1.41 1.41c.39.39 1.02.39 1.41 0s.39-1.02 0-1.41l-1.41-1.41z"/>
+                        </svg>
+                        <svg class="moon-icon" viewBox="0 0 24 24" width="20" height="20" fill="currentColor" style="display:none;">
+                            <path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9c0-.46-.04-.92-.1-1.36-.98 1.37-2.58 2.26-4.4 2.26-2.98 0-5.4-2.42-5.4-5.4 0-1.81.89-3.42 2.26-4.4-.44-.06-.9-.1-1.36-.1z"/>
+                        </svg>
+                    </button>
+                    <div class="connection-badge" id="connectionBadge">
+                        <span class="badge-dot"></span>
+                        <span class="badge-text">未连接</span>
+                    </div>
+
+                    <!-- 退出登录 -->
+                    <a href="/logout" class="logout-btn" title="退出登录">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" style="vertical-align: -3.5px; margin-right: 4px;">
+                            <path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5-5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/>
+                        </svg>
+                        <span>退出</span>
+                    </a>
+                </div>
+            </div>
+        </header>
+
+        <!-- ═══ 主体内容 ═══ -->
+        <main class="main">
+            <!-- 左侧面板：连接状态与指南 -->
+            <aside class="sidebar">
+                <div class="card connection-panel">
+                    <div class="card-header">
+                        <h2>
+                            <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" style="vertical-align: -3px; margin-right: 6px; opacity: 0.6;">
+                                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>
+                            </svg>
+                            中转连接指南
+                        </h2>
+                    </div>
+
+                    <div class="connection-guide">
+                        <div class="guide-step" id="guideStep1">
+                            <span class="step-num"></span>
+                            <p id="guideStep1Text">确保手机网络畅通。若是局域网本地运行，需确保手机和电脑在<strong>同一个 Wi-Fi</strong> 局域网下；若部署在外网，需确保公网可达。</p>
+                        </div>
+                        <div class="guide-step" id="guideStep2">
+                            <span class="step-num"></span>
+                            <p>在手机上打开「心率中转助手」App，授予蓝牙和附近设备/定位权限。</p>
+                        </div>
+                        <div class="guide-step" id="guideStep3">
+                            <span class="step-num"></span>
+                            <p id="guideStep3Text">在局域网环境下运行时，App 会尝试通过组播<strong>自动发现</strong>这台电脑并建立连接。</p>
+                        </div>
+                        <div class="guide-step" id="guideStep4">
+                            <span class="step-num"></span>
+                            <div>
+                                <p id="guideStep4Text">若自动连接失败（如外网运行或组播拦截），请在手机 App 中输入下方地址连接：</p>
+                                <div class="ip-display-box" onclick="copyIpAddress()" style="cursor: pointer;" title="点击复制完整中转连接地址">
+                                    <span class="ip-label">手动连接地址 (点击复制):</span>
+                                    <code class="ip-value" id="manualIpAddr">正在获取...</code>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 🚨 安全警报设置卡片 -->
+                <div class="card alert-settings-card">
+                    <div class="card-header">
+                        <h2>
+                            <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" style="vertical-align: -3px; margin-right: 6px; opacity: 0.7;">
+                                <path d="M12 5.99L19.53 19H4.47L12 5.99M12 2L1 21h22L12 2zm1 14h-2v2h2v-2zm0-6h-2v4h2v-4z"/>
+                            </svg>
+                            安全心率警报
+                        </h2>
+                    </div>
+                    <div class="alert-settings-body">
+                        <div class="setting-item">
+                            <label for="alertEnableToggle" class="switch-label">
+                                <span>启用超标警报</span>
+                                <input type="checkbox" id="alertEnableToggle" checked>
+                            </label>
+                        </div>
+                        <div class="setting-item">
+                            <label for="alertThreshold" class="slider-label">
+                                <span>触发阈值: <strong id="alertThresholdVal">150</strong> BPM</span>
+                            </label>
+                            <input type="range" id="alertThreshold" min="100" max="200" value="150" class="slider-input" oninput="updateAlertThresholdLabel(this.value)">
+                        </div>
+                        <div class="setting-item row-settings">
+                            <label class="checkbox-label" title="心率超标时播放警报声">
+                                <input type="checkbox" id="alertSoundToggle" checked> <span>声音提示</span>
+                            </label>
+                            <label class="checkbox-label" title="心率超标时屏幕边缘红光闪烁">
+                                <input type="checkbox" id="alertFlashToggle" checked> <span>边缘闪烁</span>
+                            </label>
+                        </div>
+                        <button class="btn-test-alert" onclick="testAlertWarning()">测试警报效果</button>
+                    </div>
+                </div>
+
+                <!-- ⚙️ 系统设置与扩展 (留出拓展位置) -->
+                <div class="card settings-expansion-card">
+                    <div class="card-header">
+                        <h2>
+                            <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" style="vertical-align: -3px; margin-right: 6px; opacity: 0.6;">
+                                <path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/>
+                            </svg>
+                            系统设置与扩展
+                        </h2>
+                    </div>
+                    <div class="settings-body">
+                        <!-- OBS 直播推流设置 -->
+                        <div class="setting-group">
+                            <span class="group-title">🎮 OBS 直播推流悬浮窗</span>
+                            <p class="group-desc">生成用于 OBS 浏览器源的透明心率叠加图层。</p>
+                            <div class="obs-copy-box">
+                                <input type="text" id="obsUrlInput" readonly value="" class="copy-input">
+                                <button class="btn-copy-url" onclick="copyObsUrl()">复制链接</button>
+                            </div>
+                        </div>
+                        
+                        <!-- 预留扩展区域 (Placeholder for future extensions) -->
+                        <div class="setting-group placeholder-group">
+                            <span class="group-title">➕ 更多功能扩展 (预留)</span>
+                            <div class="placeholder-slots">
+                                <div class="slot-item"><span class="slot-dot"></span> 智能家居 / IoT 联动配置</div>
+                                <div class="slot-item"><span class="slot-dot"></span> 历史数据 CSV 一键导出</div>
+                                <div class="slot-item"><span class="slot-dot"></span> 卡氏个性化心率区间设定</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card tips-card">
+                    <div class="card-header">
+                        <h2>
+                            <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" style="vertical-align: -3px; margin-right: 6px; opacity: 0.6;">
+                                <path d="M9 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H9v1zm3-19C8.14 2 5 5.14 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.86-3.14-7-7-7zm2.85 11.1l-.85.6V16h-4v-2.3l-.85-.6C7.8 12.16 7 10.65 7 9c0-2.76 2.24-5 5-5s5 2.24 5 5c0 1.65-.8 3.16-2.15 4.1z"/>
+                            </svg>
+                            手机保活建议
+                        </h2>
+                    </div>
+                    <div class="tips-body">
+                        <p class="tips-desc">
+                            为防止手机息屏后系统自动清理后台进程导致数据中断，请在手机上进行以下设置：
+                        </p>
+                        <ul class="tips-list">
+                            <li>在手机设置中，将「心率中转助手」的电池优化设置为<strong>「不限制/无限制」</strong>。</li>
+                            <li>允许该 App 的<strong>「自启动」</strong>与<strong>「后台运行」</strong>权限。</li>
+                            <li>在手机多任务界面中，将「心率中转助手」卡片<strong>加锁/锁定</strong>。</li>
+                        </ul>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- 右侧面板：心率显示 -->
+            <section class="content">
+                <!-- 实时监控选项卡 -->
+                <div id="liveTabContent">
+                    <div class="card hr-hero-card">
+                        <div class="hr-hero">
+                            <!-- 心跳动画 -->
+                            <div class="heart-pulse-ring" id="pulseRing"></div>
+                            <div class="heart-container" id="heartContainer">
+                                <svg class="heart-svg" id="heartSvg" viewBox="0 0 24 24" width="80" height="80">
+                                    <defs>
+                                        <linearGradient id="heartGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                            <stop offset="0%" style="stop-color:#ff2d55" />
+                                            <stop offset="100%" style="stop-color:#ff6b8a" />
+                                        </linearGradient>
+                                    </defs>
+                                    <path fill="url(#heartGradient)"
+                                          d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 
+                                             2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09
+                                             C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5
+                                             c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                                </svg>
+                            </div>
+
+                            <div class="hr-value-group">
+                                <div class="hr-value-wrapper">
+                                    <span class="hr-number" id="hrValue">--</span>
+                                </div>
+                                <span class="hr-unit">BPM</span>
+                                <span class="hr-label" id="hrLabel">等待连接...</span>
+                            </div>
+                        </div>
+
+                        <!-- 心率区间指示 -->
+                        <div class="hr-zones" id="hrZones">
+                            <div class="zone zone-rest" data-zone="rest">
+                                <span class="zone-label">休息</span>
+                                <span class="zone-range">&lt;60</span>
+                            </div>
+                            <div class="zone zone-light" data-zone="light">
+                                <span class="zone-label">轻度</span>
+                                <span class="zone-range">60-90</span>
+                            </div>
+                            <div class="zone zone-moderate" data-zone="moderate">
+                                <span class="zone-label">中等</span>
+                                <span class="zone-range">90-120</span>
+                            </div>
+                            <div class="zone zone-vigorous" data-zone="vigorous">
+                                <span class="zone-label">高强度</span>
+                                <span class="zone-range">120-150</span>
+                            </div>
+                            <div class="zone zone-peak" data-zone="peak">
+                                <span class="zone-label">极限</span>
+                                <span class="zone-range">&gt;150</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 实时图表 -->
+                    <div class="card chart-card">
+                        <div class="card-header">
+                            <h2>
+                                <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" style="vertical-align: -3px; margin-right: 6px; opacity: 0.6;">
+                                    <path d="M3.5 18.49l6-6.01 4 4L22 6.92l-1.41-1.41-7.09 7.97-4-4L2 16.99z"/>
+                                </svg>
+                                实时心率曲线
+                            </h2>
+                            <span class="chart-time-label" id="chartTimeLabel">最近 60 秒</span>
+                        </div>
+                        <div class="chart-wrapper">
+                            <canvas id="hrChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- 统计数据 -->
+                    <div class="stats-grid">
+                        <div class="card stat-card stat-min">
+                            <div class="stat-icon">
+                                <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                                    <path d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z" transform="rotate(180 12 12)"/>
+                                </svg>
+                            </div>
+                            <div class="stat-info">
+                                <span class="stat-label">最低心率</span>
+                                <div class="stat-value-row">
+                                    <span class="stat-value" id="statMin">--</span>
+                                    <span class="stat-unit">BPM</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card stat-card stat-max">
+                            <div class="stat-icon">
+                                <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                                    <path d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z"/>
+                                </svg>
+                            </div>
+                            <div class="stat-info">
+                                <span class="stat-label">最高心率</span>
+                                <div class="stat-value-row">
+                                    <span class="stat-value" id="statMax">--</span>
+                                    <span class="stat-unit">BPM</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card stat-card stat-avg">
+                            <div class="stat-icon">
+                                <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                                    <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/>
+                                </svg>
+                            </div>
+                            <div class="stat-info">
+                                <span class="stat-label">平均心率</span>
+                                <div class="stat-value-row">
+                                    <span class="stat-value" id="statAvg">--</span>
+                                    <span class="stat-unit">BPM</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card stat-card stat-count">
+                            <div class="stat-icon">
+                                <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                                    <path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/>
+                                </svg>
+                            </div>
+                            <div class="stat-info">
+                                <span class="stat-label">采集数据</span>
+                                <div class="stat-value-row">
+                                    <span class="stat-value" id="statCount">0</span>
+                                    <span class="stat-unit">次</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- HRV & 疲劳度评估卡片 -->
+                    <div class="card hrv-card" style="margin-top: 16px;">
+                        <div class="card-header">
+                            <h2>
+                                <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" style="vertical-align: -3.5px; margin-right: 6px; opacity: 0.75; cursor: help;">
+                                    <title>心率变异性 (HRV)：反映心跳间期时间的微小差异。HRV 越高代表自主神经系统活性越强、身体恢复越好；HRV 越低代表身体正面临压力与疲劳。</title>
+                                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>
+                                </svg>
+                                自主神经与身体疲劳度评估 (HRV)
+                            </h2>
+                            <span class="hrv-source-badge" id="hrvSourceBadge">等待数据...</span>
+                        </div>
+                        <div class="hrv-body">
+                            <div class="hrv-metric-row">
+                                <div class="hrv-metric-item">
+                                    <span class="hrv-metric-label">心率变异性 (RMSSD)</span>
+                                    <div class="hrv-metric-value-row">
+                                        <span class="hrv-metric-value" id="hrvRmssdValue">--</span>
+                                        <span class="hrv-metric-unit">ms</span>
+                                    </div>
+                                    <span class="hrv-metric-desc" id="hrvRmssdDesc">需至少5次连续跳动分析</span>
+                                </div>
+                                <div class="hrv-metric-item">
+                                    <span class="hrv-metric-label">身体压力指数</span>
+                                    <div class="hrv-metric-value-row">
+                                        <span class="hrv-metric-value" id="hrvStressValue">--</span>
+                                        <span class="hrv-metric-unit">/ 100</span>
+                                    </div>
+                                    <div class="hrv-progress-container">
+                                        <div class="hrv-progress-bar bg-stress" id="hrvStressProgress" style="width: 0%"></div>
+                                    </div>
+                                    <span class="hrv-metric-desc" id="hrvStressDesc">评估交感神经活跃度</span>
+                                </div>
+                                <div class="hrv-metric-item">
+                                    <span class="hrv-metric-label">身体疲劳度</span>
+                                    <div class="hrv-metric-value-row">
+                                        <span class="hrv-metric-value" id="hrvFatigueValue">--</span>
+                                        <span class="hrv-metric-unit">%</span>
+                                    </div>
+                                    <div class="hrv-progress-container">
+                                        <div class="hrv-progress-bar bg-fatigue" id="hrvFatigueProgress" style="width: 0%"></div>
+                                    </div>
+                                    <span class="hrv-metric-desc" id="hrvFatigueDesc">建议合理安排休息</span>
+                                </div>
+                            </div>
+                            
+                            <!-- HRV 说明提示 -->
+                            <div class="hrv-tips-box" style="margin-top: 20px; padding: 12px 16px; background: rgba(255, 255, 255, 0.015); border-radius: 8px; border: 1px dashed rgba(255, 255, 255, 0.06); display: flex; gap: 10px; align-items: flex-start;">
+                                <div style="color: var(--text-secondary); margin-top: 2px; flex-shrink: 0; display: flex;">
+                                    <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                                        <path d="M11 18h2v-2h-2v2zm1-16C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-14h2v6h-2V6z"/>
+                                    </svg>
+                                </div>
+                                <div style="font-size: 0.76rem; color: var(--text-secondary); line-height: 1.55;">
+                                    <strong>💡 算法与数据源说明：</strong><br>
+                                    1. <strong>⌚ 硬件级真实数据</strong>：连接支持心跳间期 (R-R 间期) 广播的专业传感器（如心率带）时，系统采用标准 RMSSD 算法进行医学级的自主神经系统健康分析。<br>
+                                    2. <strong>🌐 网络模拟估算</strong>：连接普通手环/手表（仅广播每秒平均 BPM）时，系统利用相邻心率波动和生理特征补偿系数进行估算，能有效捕捉并展示疲劳与压力的发展走向。<br>
+                                    <em>* 本系统所有评估数据仅作日常运动和健康参考，不可替代任何医疗专业诊断。</em>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 历史记录选项卡 -->
+                <div id="historyTabContent" style="display: none;">
+                    <!-- 查询控制卡片 -->
+                    <div class="card history-query-card">
+                        <div class="card-header">
+                            <h2>📅 历史数据查询</h2>
+                        </div>
+                        <div class="history-controls">
+                            <div class="history-date-picker">
+                                <label for="historyDate">选择日期:</label>
+                                <input type="date" id="historyDate" class="date-input" onclick="this.showPicker()">
+                            </div>
+                            <button class="btn-query" onclick="queryHistory()">查询数据</button>
+                        </div>
+                    </div>
+
+                    <!-- 历史空状态 -->
+                    <div class="card history-empty-state" id="historyEmptyState" style="margin-top: 16px;">
+                        <div class="history-empty-icon">📅</div>
+                        <p>该日期暂无心率记录，请选择日期并查询数据</p>
+                    </div>
+
+                    <!-- 历史图表 -->
+                    <div class="card chart-card" id="historyChartCard" style="display: none; margin-top: 16px;">
+                        <div class="card-header">
+                            <h2>
+                                <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" style="vertical-align: -3px; margin-right: 6px; opacity: 0.6;">
+                                    <path d="M3.5 18.49l6-6.01 4 4L22 6.92l-1.41-1.41-7.09 7.97-4-4L2 16.99z"/>
+                                </svg>
+                                历史心率曲线
+                            </h2>
+                            <span class="chart-time-label" id="historyChartTimeLabel">未选择</span>
+                        </div>
+                        <div class="chart-wrapper">
+                            <canvas id="historyChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- 历史统计数据 -->
+                    <div class="stats-grid" id="historyStatsGrid" style="display: none; margin-top: 16px;">
+                        <div class="card stat-card stat-min">
+                            <div class="stat-icon">
+                                <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                                    <path d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z" transform="rotate(180 12 12)"/>
+                                </svg>
+                            </div>
+                            <div class="stat-info">
+                                <span class="stat-label">最低心率</span>
+                                <div class="stat-value-row">
+                                    <span class="stat-value" id="historyMin">--</span>
+                                    <span class="stat-unit">BPM</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card stat-card stat-max">
+                            <div class="stat-icon">
+                                <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                                    <path d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z"/>
+                                </svg>
+                            </div>
+                            <div class="stat-info">
+                                <span class="stat-label">最高心率</span>
+                                <div class="stat-value-row">
+                                    <span class="stat-value" id="historyMax">--</span>
+                                    <span class="stat-unit">BPM</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card stat-card stat-avg">
+                            <div class="stat-icon">
+                                <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                                    <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/>
+                                </svg>
+                            </div>
+                            <div class="stat-info">
+                                <span class="stat-label">平均心率</span>
+                                <div class="stat-value-row">
+                                    <span class="stat-value" id="historyAvg">--</span>
+                                    <span class="stat-unit">BPM</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card stat-card stat-count">
+                            <div class="stat-icon">
+                                <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                                    <path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/>
+                                </svg>
+                            </div>
+                            <div class="stat-info">
+                                <span class="stat-label">记录点数</span>
+                                <div class="stat-value-row">
+                                    <span class="stat-value" id="historyCount">0</span>
+                                    <span class="stat-unit">次</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 预警推送选项卡 -->
+                <div id="notificationsTabContent" style="display: none;">
+                    <div class="card settings-form-card">
+                        <div class="card-header">
+                            <h2>
+                                <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" style="vertical-align: -3px; margin-right: 6px; opacity: 0.6;">
+                                    <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2zm-2 1H8v-6c0-2.48 1.51-4.5 4-4.5s4 2.02 4 4.5v6z"/>
+                                </svg>
+                                机器人预警推送设置
+                            </h2>
+                            <p class="subtitle">当心率超过安全阈值时，自动向指定的机器人发送即时警报通知。</p>
+                        </div>
+                        
+                        <div class="settings-form">
+                            <!-- 1. 全局推送预警阈值 -->
+                            <div class="form-row">
+                                <div class="form-label-group">
+                                    <span class="form-label">推送预警阈值 (BPM)</span>
+                                    <span class="form-hint">当实时心率达到或超过该数值时触发推送，并与主页警报同步。</span>
+                                </div>
+                                <div style="display: flex; align-items: center; justify-content: flex-end; width: 120px;">
+                                    <input type="number" id="pushThresholdInput" min="100" max="200" class="text-input" style="text-align: center; font-weight: 600;">
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-label-group">
+                                    <span class="form-label">推送冷却时间 (分钟)</span>
+                                    <span class="form-hint">防止心率持续超标时频繁轰炸手机。在此时间内仅会发送一次预警。</span>
+                                </div>
+                                <div style="display: flex; align-items: center; justify-content: flex-end; width: 120px;">
+                                    <input type="number" id="pushCooldownInput" min="1" max="60" class="text-input" style="text-align: center; font-weight: 600;">
+                                </div>
+                            </div>
+
+                            <!-- 2. PushPlus 微信推送 -->
+                            <div class="form-row">
+                                <div class="form-label-group">
+                                    <span class="form-label">微信推送 (PushPlus)</span>
+                                    <span class="form-hint">通过微信公众号接收心率异常提醒。请在 pushplus.plus 获取 Token。</span>
+                                </div>
+                                <label class="switch-label">
+                                    <input type="checkbox" id="pushplusEnableToggle">
+                                </label>
+                            </div>
+                            <div class="form-row flex-column" id="pushplusTokenRow" style="border-bottom: none; padding-top: 0; display: none;">
+                                <div class="input-with-label" style="width: 100%;">
+                                    <label for="pushplusTokenInput">PushPlus Token</label>
+                                    <input type="text" id="pushplusTokenInput" placeholder="请输入 PushPlus Token" class="text-input">
+                                </div>
+                            </div>
+
+                            <!-- 3. Telegram 机器人 -->
+                            <div class="form-row">
+                                <div class="form-label-group">
+                                    <span class="form-label">Telegram 预警机器人</span>
+                                    <span class="form-hint">直接向您的 TG 账号或频道发送警报。</span>
+                                </div>
+                                <label class="switch-label">
+                                    <input type="checkbox" id="tgEnableToggle">
+                                </label>
+                            </div>
+                            <div class="form-row flex-column" id="tgConfigRow" style="border-bottom: none; padding-top: 0; display: none; gap: 12px;">
+                                <div class="input-with-label" style="width: 100%;">
+                                    <label for="tgTokenInput">Telegram Bot Token</label>
+                                    <input type="text" id="tgTokenInput" placeholder="请输入 Telegram Bot Token" class="text-input">
+                                </div>
+                                <div class="input-with-label" style="width: 100%;">
+                                    <label for="tgChatIdInput">Telegram Chat ID</label>
+                                    <input type="text" id="tgChatIdInput" placeholder="请输入 Telegram Chat ID" class="text-input">
+                                </div>
+                            </div>
+
+                            <!-- 4. 钉钉群机器人 -->
+                            <div class="form-row">
+                                <div class="form-label-group">
+                                    <span class="form-label">钉钉群自定义机器人</span>
+                                    <span class="form-hint">向钉钉群内推送心率警告。填入 Webhook 链接中的 access_token 值。</span>
+                                </div>
+                                <label class="switch-label">
+                                    <input type="checkbox" id="dingtalkEnableToggle">
+                                </label>
+                            </div>
+                            <div class="form-row flex-column" id="dingtalkTokenRow" style="border-bottom: none; padding-top: 0; display: none;">
+                                <div class="input-with-label" style="width: 100%;">
+                                    <label for="dingtalkTokenInput">钉钉 Access Token</label>
+                                    <input type="text" id="dingtalkTokenInput" placeholder="请输入 钉钉 Access Token" class="text-input">
+                                </div>
+                            </div>
+
+                            <!-- 5. 飞书群机器人 -->
+                            <div class="form-row">
+                                <div class="form-label-group">
+                                    <span class="form-label">飞书群自定义机器人</span>
+                                    <span class="form-hint">向飞书群内推送警告。填入 Webhook 链接末尾的 Token / UUID 串。</span>
+                                </div>
+                                <label class="switch-label">
+                                    <input type="checkbox" id="feishuEnableToggle">
+                                </label>
+                            </div>
+                            <div class="form-row flex-column" id="feishuTokenRow" style="border-bottom: none; padding-top: 0; display: none;">
+                                <div class="input-with-label" style="width: 100%;">
+                                    <label for="feishuTokenInput">飞书 机器人 Token</label>
+                                    <input type="text" id="feishuTokenInput" placeholder="请输入 飞书 机器人 Token" class="text-input">
+                                </div>
+                            </div>
+
+                            <!-- 测试与保存动作 -->
+                            <div class="form-actions" style="gap: 12px;">
+                                <button class="btn-secondary" onclick="testPushNotifications()" style="padding: 12px 24px;">发送测试消息</button>
+                                <button class="btn-primary" onclick="savePushSettings()">保存所有设置</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 系统设置选项卡 -->
+                <div id="settingsTabContent" style="display: none;">
+                    <div class="card settings-form-card">
+                        <div class="card-header">
+                            <h2>
+                                <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" style="vertical-align: -3px; margin-right: 6px; opacity: 0.6;">
+                                    <path d="M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64l2.11 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.17-.59 1.69-.98l2.49 1c.23.09.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"/>
+                                </svg>
+                                服务端参数配置
+                            </h2>
+                            <p class="subtitle">实时调整后端运行参数。注：敏感操作需管理员权限。</p>
+                        </div>
+                        
+                        <div class="settings-form">
+                            <!-- 1. 云模式切换 -->
+                            <div class="form-row">
+                                <div class="form-label-group">
+                                    <span class="form-label">云端部署模式 (Cloud Mode)</span>
+                                    <span class="form-hint">开启后仅监听 127.0.0.1 并关闭 UDP 局域网广播。建议生产环境开启并搭配反向代理使用。</span>
+                                </div>
+                                <label class="switch-label">
+                                    <input type="checkbox" id="serverCloudModeToggle">
+                                </label>
+                            </div>
+                            
+                            <!-- 1.5. 运行端口配置 -->
+                            <div class="form-row">
+                                <div class="form-label-group">
+                                    <span class="form-label">Web 服务端口 (Server Port)</span>
+                                    <span class="form-hint">后台服务运行绑定的 Web 端口（默认 8765）。修改后需要手动重启后端生效。</span>
+                                </div>
+                                <div style="display: flex; align-items: center; justify-content: flex-end; width: 120px;">
+                                    <input type="number" id="serverPortInput" min="1" max="65535" class="text-input" style="text-align: center; font-weight: 600;">
+                                </div>
+                            </div>
+                            
+                            <!-- 2. API Token 配置 -->
+                            <div class="form-row flex-column">
+                                <div class="form-label-group">
+                                    <span class="form-label">安全 API Token (用于手机 App / 悬浮窗连接校验)</span>
+                                    <span class="form-hint">客户端握手报头中的 Bearer 凭证，请妥善保管。</span>
+                                </div>
+                                <div class="token-input-group">
+                                    <input type="text" id="serverApiTokenInput" readonly class="text-input readonly-input">
+                                    <button class="btn-secondary" onclick="regenerateApiToken()">重新生成</button>
+                                    <button class="btn-secondary" onclick="copyServerApiToken()">复制</button>
+                                </div>
+                            </div>
+                            
+                            <!-- 3. 管理员密码修改 -->
+                            <div class="form-row flex-column">
+                                <div class="form-label-group">
+                                    <span class="form-label">修改网页端登录密码</span>
+                                    <span class="form-hint">请输入当前密码以验证身份，并设置符合安全要求的长密码。</span>
+                                </div>
+                                <div class="password-change-group">
+                                    <div class="input-with-label">
+                                        <label for="oldPasswordInput">当前密码</label>
+                                        <input type="password" id="oldPasswordInput" placeholder="请输入当前密码" class="text-input">
+                                    </div>
+                                    <div class="input-with-label">
+                                        <label for="newPasswordInput">新密码</label>
+                                        <input type="password" id="newPasswordInput" placeholder="不少于6位" class="text-input">
+                                    </div>
+                                    <div class="input-with-label">
+                                        <label for="confirmPasswordInput">确认新密码</label>
+                                        <input type="password" id="confirmPasswordInput" placeholder="请再次输入新密码" class="text-input">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 保存动作 -->
+                            <div class="form-actions">
+                                <button class="btn-primary" onclick="saveServerSettings()">保存所有修改</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 4. 数据维护与清理 (危险操作) -->
+                    <div class="card settings-form-card" style="margin-top: 20px; border-color: rgba(255, 45, 85, 0.25);">
+                        <div class="card-header">
+                            <h2 style="color: var(--accent); display: flex; align-items: center; gap: 6px;">
+                                <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+                                    <path d="M12 2C6.48 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+                                </svg>
+                                数据维护与清理 (危险操作)
+                            </h2>
+                            <p class="subtitle">清空或重置系统保存的数据，操作生效后不可撤销。</p>
+                        </div>
+                        <div class="settings-body" style="padding: 18px 20px;">
+                            <div class="form-row" style="border-bottom: none;">
+                                <div class="form-label-group">
+                                    <span class="form-label">清空所有历史心率记录</span>
+                                    <span class="form-hint">删除本地数据库中保存的全部心率记录，释放空间并重置统计指标。</span>
+                                </div>
+                                <div style="display: flex; align-items: center; justify-content: flex-end; width: 140px;">
+                                    <button class="btn-primary" style="background: linear-gradient(135deg, #ff2d55 0%, #ff527b 100%);" onclick="clearHistoryData()">清空数据库</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- ═══ 通知弹窗 ═══ -->
+        <div class="toast-container" id="toastContainer"></div>
+    </div>
+
+    <script src="/static/app.js?v=3.1.2"></script>
+</body>
+</html>

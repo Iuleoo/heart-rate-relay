@@ -1,0 +1,55 @@
+# ====================================================================
+# ❤️ 心率监测中转站 (Heart Rate Relay) Git Ignore 配置文件
+# ====================================================================
+
+# 1. 敏感配置文件与本地数据 (必须忽略，严防上传到 GitHub 公开泄露)
+Server/server_config.json
+Server/heartrate.db
+Server/heartrate.db-journal
+Server/heartrate.db-wal
+Server/heartrate.db-shm
+WindowsApp/config.json
+config.json
+
+# 2. Python 后端缓存与虚拟环境
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+
+# 3. Android 安卓开发缓存与本地配置
+.gradle/
+local.properties
+.idea/
+AndroidApp/.gradle/
+AndroidApp/local.properties
+AndroidApp/.idea/
+AndroidApp/app/build/
+AndroidApp/build/
+build/
+*.apk
+*.ap_
+*.aar
+*.dex
+*.class
+
+# 4. Windows WPF 编译缓存与 VS 本地设置
+.vs/
+WindowsApp/bin/
+WindowsApp/obj/
+WindowsApp/.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# 5. 系统与临时文件
+Thumbs.db
+Desktop.ini
+.DS_Store
+*.tmp
+*.log

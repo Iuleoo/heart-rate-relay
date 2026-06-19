@@ -45,8 +45,16 @@ def verify_password(password: str, encoded_hash: str) -> bool:
     except Exception:
         return False
 
+def get_config_path():
+    data_dir = os.environ.get("DATA_DIR")
+    if data_dir:
+        # 确保目标文件夹已创建
+        os.makedirs(data_dir, exist_ok=True)
+        return Path(data_dir) / "server_config.json"
+    return Path(__file__).parent / "server_config.json"
+
 def load_config():
-    config_path = Path(__file__).parent / "server_config.json"
+    config_path = get_config_path()
     if not config_path.exists():
         password = secrets.token_urlsafe(6)
         api_token = secrets.token_hex(16)

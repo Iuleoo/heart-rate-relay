@@ -1,0 +1,38 @@
+version: "3.8"
+
+services:
+  # 1. 心率中转服务器核心容器 (Python + Web 控制台)
+  server:
+    build:
+      context: ./Server
+      dockerfile: Dockerfile
+    container_name: heart_rate_server
+    restart: unless-stopped
+    volumes:
+      # 持久化挂载：在宿主机当前目录自动创建 data/ 目录，用来保存 SQLite 数据库与密钥配置文件
+      - ./data:/app/data
+    environment:
+      # 告诉 Python 程序使用挂载卷作为数据目录
+      - DATA_DIR=/app/data
+    expose:
+      - "8765"
+
+  # 2. Caddy 智能反向代理网关 (自动获取 Let's Encrypt SSL 证书，并完美支持 WebSocket)
+  caddy:
+    image: caddy:2-alpine
+    container_name: heart_rate_caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      # 持久化挂载 Caddy 自身的 SSL 证书及配置，防止每次重启时重复请求证书超限
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - server
+
+volumes:
+  caddy_data:
+  caddy_config:

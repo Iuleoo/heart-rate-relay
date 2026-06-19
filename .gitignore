@@ -10,6 +10,7 @@ Server/heartrate.db-wal
 Server/heartrate.db-shm
 WindowsApp/config.json
 config.json
+data/
 
 # 2. Python 后端缓存与虚拟环境
 __pycache__/

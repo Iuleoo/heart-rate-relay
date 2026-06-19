@@ -7,7 +7,14 @@ logger = logging.getLogger("HeartRateMonitor.Database")
 
 class HeartRateDB:
     def __init__(self, db_path="heartrate.db"):
-        self.db_path = Path(__file__).parent / db_path
+        import os
+        data_dir = os.environ.get("DATA_DIR")
+        if data_dir:
+            # 确保目标文件夹已创建
+            os.makedirs(data_dir, exist_ok=True)
+            self.db_path = Path(data_dir) / db_path
+        else:
+            self.db_path = Path(__file__).parent / db_path
         self.init_db()
 
     def init_db(self):

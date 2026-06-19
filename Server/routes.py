@@ -12,7 +12,8 @@ from config import (
     hash_password,
     get_local_ip,
     active_sessions,
-    failed_logins
+    failed_logins,
+    get_config_path
 )
 from database import db
 from ble_monitor import monitor
@@ -194,7 +195,7 @@ async def post_server_config_handler(request):
     except Exception:
         return web.json_response({"success": False, "message": "无效的请求参数"}, status=400)
         
-    config_path = Path(__file__).parent / "server_config.json"
+    config_path = get_config_path()
     config = load_config()
     
     # 1. 处理云端模式切换

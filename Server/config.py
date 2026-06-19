@@ -68,6 +68,16 @@ def load_config():
         with open(config_path, "w", encoding="utf-8") as f:
             json.dump(config_data, f, indent=4)
         logger.info("🆕 已自动生成 server_config.json 配置文件")
+        
+        # 写入初始明文密码到临时文件方便用户查看 (安全性起见，提示用户首次登录后删除此文件)
+        try:
+            init_pw_path = config_path.parent / "admin_init_password.txt"
+            with open(init_pw_path, "w", encoding="utf-8") as f_pw:
+                f_pw.write(f"管理员初始登录密码: {password}\n[安全提示] 首次登录成功后，强烈建议您删除此明文密码文件！\n")
+            logger.info(f"🔑 初始明文密码已保存至: {init_pw_path}")
+        except Exception as e:
+            logger.warning(f"写入初始明文密码文件失败: {e}")
+            
         print(f"\n  [!] 首次启动自动生成管理员密码: {password} (已哈希加密保存至配置文件)\n")
         return config_data
     else:

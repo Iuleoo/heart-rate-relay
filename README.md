@@ -67,10 +67,10 @@ shouhuan/ (项目根目录)
    ```bash
    docker compose up -d --build
    ```
-3. **获取自动生成的密钥/密码**：容器首次运行会自动在根目录创建 `data/` 目录，运行以下命令查看系统随机生成的密码 and Token：
-   ```bash
-   cat data/server_config.json
-   ```
+3. **获取自动生成的密钥/密码**：容器首次运行会自动在根目录创建 `data/` 目录。
+   * **API Token**（用于手机 App 连接）保存在 `data/server_config.json` 中，可通过命令运行 `cat data/server_config.json` 查看。
+   * **管理员初始登录密码**（明文）已安全保存在 **`data/admin_init_password.txt`** 中，可通过命令运行 `cat data/admin_init_password.txt` 查看；您也可以运行 `docker compose logs server` 在启动日志中查看。
+   * *[安全建议]*：首次登录成功后，强烈建议您手动删除 `data/admin_init_password.txt` 临时密码文件。
 
 #### 方法 B：本地 Python 源码运行 (适合本机开发调试)
 1. 进入 `Server/` 目录：
@@ -85,7 +85,9 @@ shouhuan/ (项目根目录)
    ```bash
    python main.py
    ```
-4. 首次启动时，控制台将**自动生成一个 8 位管理员随机密码**（安全保存至 `server_config.json`）。同时，浏览器将自动打开控制台页面。
+4. 首次启动时，控制台将**在终端输出 8 位管理员初始密码**。同时：
+   * **API Token** 会保存在 `Server/server_config.json` 中。
+   * **初始明文密码** 会临时保存在 **`Server/admin_init_password.txt`** 文件中（建议首次登录后将其删除以防泄露）。同时，浏览器将自动打开控制台页面。
 
 ---
 
